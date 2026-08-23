@@ -143,6 +143,17 @@ writeText "login-inner" ''
 
   . "${config.user.home}/.nix-profile/etc/profile.d/nix-on-droid-session-init.sh"
 
+  ${lib.optionalString (config.environment.loginHook != "") ''
+    if [ "$#" -eq 0 ]; then  # if script is called from within Nix-on-Droid app
+      # environment.loginHook: run once per native login, before the user
+      # shell starts. Guarded with `|| true` so a failing hook never blocks
+      # the login.
+      {
+        ${config.environment.loginHook}
+      } || true
+    fi
+  ''}
+
   ${lib.optionalString config.build.initialBuild ''
     exec /usr/bin/env bash  # otherwise it'll be a limited bash that came with Nix
   ''}

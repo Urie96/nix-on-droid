@@ -23,9 +23,13 @@ in
     environment.files = {
       login = mkOption {
         type = types.package;
-        readOnly = true;
         internal = true;
-        description = "Login script.";
+        description = ''
+          Login script. Can be overridden (e.g. by
+          <option>build.container.mode</option> set to
+          <literal>"chroot"</literal>) to replace the default proot-based
+          login.
+        '';
       };
 
       loginInner = mkOption {
@@ -52,9 +56,9 @@ in
 
     build.activation = {
       installLogin = ''
-        if ! diff /bin/login ${login} > /dev/null; then
+        if ! diff /bin/login ${config.environment.files.login} > /dev/null; then
           $DRY_RUN_CMD mkdir $VERBOSE_ARG --parents /bin
-          $DRY_RUN_CMD cp $VERBOSE_ARG ${login} /bin/.login.tmp
+          $DRY_RUN_CMD cp $VERBOSE_ARG ${config.environment.files.login} /bin/.login.tmp
           $DRY_RUN_CMD chmod $VERBOSE_ARG u+w /bin/.login.tmp
           $DRY_RUN_CMD mv $VERBOSE_ARG /bin/.login.tmp /bin/login
         fi

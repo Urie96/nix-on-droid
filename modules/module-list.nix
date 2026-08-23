@@ -14,6 +14,7 @@
   ./environment/etc
   ./environment/links.nix
   ./environment/login
+  ./environment/login/chroot-login.nix
   ./environment/networking.nix
   ./environment/nix.nix
   ./environment/path.nix

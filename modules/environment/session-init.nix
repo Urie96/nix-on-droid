@@ -61,6 +61,21 @@ in
         '';
       };
 
+      loginHook = mkOption {
+        default = "";
+        type = types.lines;
+        description = ''
+          Shell commands executed once when a native Nix-on-Droid session
+          starts (the Nix-on-Droid app login), after the session environment
+          is set up (PATH, HOME, USER, ...) and before the user shell is
+          started, so the whole session sees their effects.
+
+          Not run for ssh sessions (sshd starts the user shell directly) and
+          not run when <filename>login-inner</filename> is invoked with
+          arguments (non-login use). A failing hook never blocks the login.
+        '';
+      };
+
       sessionVariables = mkOption {
         default = { };
         type = types.attrs;

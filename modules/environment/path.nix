@@ -44,16 +44,19 @@ in
   config = {
 
     build.activation.installPackages = ''
+      # Make sure ~/.nix-profile resolves to the standard user profile so
+      # the manifest.json guard below works even if the symlink was lost.
+      $DRY_RUN_CMD ln -sfn "${config.user.home}/.local/state/nix/profiles/profile" "${config.user.home}/.nix-profile"
       if [[ -e "${config.user.home}/.nix-profile/manifest.json" ]]; then
         # manual removal and installation as two non-atomical steps is required
         # because of https://github.com/NixOS/nix/issues/6349
 
         nix_previous="$(command -v nix)"
 
-        nix profile list \
-          | grep 'nix-on-droid-path$' \
-          | cut -d ' ' -f 4 \
-          | xargs -t $DRY_RUN_CMD nix profile remove $VERBOSE_ARG
+        # Remove any stale element by name (no-op if absent). The old
+        # grep/cut parsing of `nix profile list` broke with nix >= 2.18,
+        # whose output is multi-line ("Name: ..." / "Store paths: ...").
+        $DRY_RUN_CMD nix profile remove nix-on-droid-path || true
 
         $DRY_RUN_CMD $nix_previous profile install ${cfg.path}
 
