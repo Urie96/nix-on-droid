@@ -6,6 +6,11 @@ with lib;
 
 let
   cfg = config.environment;
+
+  # dix (Diff Nix) is used after installation to show which packages changed
+  # in this update. It is optional: older nixpkgs do not provide it, in which
+  # case the diff is simply skipped.
+  dix = pkgs.dix or null;
 in
 
 {
@@ -53,6 +58,15 @@ in
 
         nix_previous="$(command -v nix)"
 
+        ${optionalString (dix != null) ''
+          # Store path of the currently installed nix-on-droid-path element,
+          # so that dix can diff it against the new one after the install.
+          nix_on_droid_path_old="$(
+            "$nix_previous" profile list --json \
+              | ${pkgs.jq}/bin/jq -r '.elements["nix-on-droid-path"].storePaths[0]'
+          )"
+        ''}
+
         # Remove any stale element by name (no-op if absent). The old
         # grep/cut parsing of `nix profile list` broke with nix >= 2.18,
         # whose output is multi-line ("Name: ..." / "Store paths: ...").
@@ -62,8 +76,25 @@ in
 
         unset nix_previous
       else
+        ${optionalString (dix != null) ''
+          # Store path of the currently installed nix-on-droid-path
+          # environment, for the dix diff below.
+          nix_on_droid_path_old="$(
+            nix-env -q --out-path nix-on-droid-path \
+              | sed -n 's/^[^ ]* \(.*\)$/\1/p'
+          )"
+        ''}
+
         $DRY_RUN_CMD nix-env --install ${cfg.path}
       fi
+
+      ${optionalString (dix != null) ''
+        # Show which packages changed in this update with dix.
+        if [[ -n "$nix_on_droid_path_old" && "$nix_on_droid_path_old" != "${cfg.path}" ]]; then
+          echo "Package changes in this update:"
+          $DRY_RUN_CMD ${dix}/bin/dix "$nix_on_droid_path_old" "${cfg.path}" || true
+        fi
+      ''}
     '';
 
     environment = {
