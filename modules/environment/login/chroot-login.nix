@@ -134,7 +134,10 @@ let
 
     CHROOT_PATH=${chrootPath}
     mkdir -p $CHROOT_PATH
-    NOD_DIRS="nix bin etc tmp usr dev/shm"
+    # Directories bound from the installation dir into the chroot instead
+    # of the host root (build.container.nodDirs; the base set comes from
+    # this module's config, nix-ld adds lib/lib64 when enabled).
+    NOD_DIRS="${builtins.concatStringsSep " " cfg.nodDirs}"
 
     # Clean up nested copies of the chroot bind mounts left behind by older
     # logins that rbind-mounted /data (which contains the chroot dir itself)
@@ -241,19 +244,49 @@ in
 {
   # Naming follows upstream nix-on-droid PR #538 ("Add chroot container
   # mode alongside proot"): build.container.mode = "proot" | "chroot".
-  options.build.container.mode = lib.mkOption {
-    type = lib.types.enum [ "proot" "chroot" ];
-    default = "proot";
-    description = ''
-      Container mode used for the login session. `proot` (default) needs no
-      root and no kernel namespaces. `chroot` uses a kernel-native chroot
-      (native syscalls, no ptrace interception) on rooted devices; it
-      requires root and has no proot fallback (login fails if root/su is
-      unavailable).
-    '';
+  options.build.container = {
+    mode = lib.mkOption {
+      type = lib.types.enum [ "proot" "chroot" ];
+      default = "proot";
+      description = ''
+        Container mode used for the login session. `proot` (default) needs no
+        root and no kernel namespaces. `chroot` uses a kernel-native chroot
+        (native syscalls, no ptrace interception) on rooted devices; it
+        requires root and has no proot fallback (login fails if root/su is
+        unavailable).
+      '';
+    };
+
+    # Directories bound from the installation dir into the chroot instead
+    # of the host root, so they are writable inside the chroot (the host
+    # dirs are read-only). The base set is defined in this module's
+    # config; other modules (e.g. the nix-ld module) and users add to it
+    # via plain definitions, which listOf concatenates.
+    nodDirs = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = ''
+        Directories bound from the installation dir into the chroot
+        instead of from the host root, making them writable inside the
+        chroot. The base set is provided by chroot-login.nix; the nix-ld
+        module adds `lib`/`lib64` here so its interpreter symlink is
+        visible.
+      '';
+    };
   };
 
   config = lib.mkIf (cfg.mode == "chroot") {
+    # Base Nix-on-Droid-managed dirs. The nix-ld module and users add to
+    # build.container.nodDirs (listOf definitions concatenate).
+    build.container.nodDirs = [
+      "nix"
+      "bin"
+      "etc"
+      "tmp"
+      "usr"
+      "dev/shm"
+    ];
+
     # Replace the default proot login script. The default `installLogin`
     # activation installs `environment.files.login` to /bin/login, so the
     # chroot login is picked up there automatically.
