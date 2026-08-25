@@ -305,9 +305,7 @@ in
     '';
 
     environment.motd = lib.mkAfter ''
-      chroot login enabled (native syscall speed, no proot fallback).
-      Root: use 'sudo <cmd>' or 'su'. If the nix store has permission
-      errors after root operations, run 'sweep-store' to fix ownership.
+      chroot login enabled (native syscall speed, no proot fallback). If the nix store has permission errors after root operations, run 'sweep-store' to fix ownership.
     '';
 
     environment.packages = [ pkgs.util-linux fake-sudo-pkg sweep-store-pkg ];

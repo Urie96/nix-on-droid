@@ -15,7 +15,6 @@
   ./environment/links.nix
   ./environment/login
   ./environment/login/chroot-login.nix
-  ./environment/login/nix-ld.nix
   ./environment/networking.nix
   ./environment/nix.nix
   ./environment/path.nix
@@ -23,6 +22,8 @@
   ./environment/shell.nix
   ./home-manager.nix
   ./nixpkgs/options.nix
+  ./programs/fish.nix
+  ./programs/nix-ld.nix
   ./terminal.nix
   ./time.nix
   ./upgrade.nix

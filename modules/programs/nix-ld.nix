@@ -11,7 +11,7 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.build.container.nixLd;
+  cfg = config.programs.nix-ld;
 
   installationDir = config.build.installationDir;
 
@@ -34,7 +34,7 @@ let
   nixLdInterp = "/${pkgs.stdenv.hostPlatform.libDir}/${builtins.baseNameOf pkgs.stdenv.cc.bintools.dynamicLinker}";
 in
 {
-  options.build.container.nixLd = {
+  options.programs.nix-ld = {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -72,10 +72,10 @@ in
 
     # Base library set, defined in config instead of as the option
     # default: multiple listOf definitions are concatenated, so a user's
-    # `build.container.nixLd.libraries = [ ... ]` extends this set
+    # `programs.nix-ld.libraries = [ ... ]` extends this set
     # instead of replacing it. Mirrors NixOS programs.nix-ld (minus
     # systemd, which does not exist here) plus glibc.
-    build.container.nixLd.libraries = with pkgs; [
+    programs.nix-ld.libraries = with pkgs; [
       glibc
       zlib
       zstd

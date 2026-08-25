@@ -72,7 +72,7 @@ in
         # whose output is multi-line ("Name: ..." / "Store paths: ...").
         $DRY_RUN_CMD nix profile remove nix-on-droid-path || true
 
-        $DRY_RUN_CMD $nix_previous profile install ${cfg.path}
+        $DRY_RUN_CMD $nix_previous profile add ${cfg.path}
 
         unset nix_previous
       else
