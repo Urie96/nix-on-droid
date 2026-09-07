@@ -101,15 +101,16 @@ in
 
     inherit (cfg.config) assertions warnings;
 
-    build = {
-      activationBefore = mkIf cfg.useUserPackages {
-        setPriorityHomeManagerPath = ''
-          if nix-env -q | grep '^home-manager-path$'; then
-            $DRY_RUN_CMD nix-env $VERBOSE_ARG --set-flag priority 120 home-manager-path
-          fi
-        '';
-      };
+    # No `activationBefore` step is needed anymore: the old
+    # setPriorityHomeManagerPath hack (raising the priority of a stale
+    # `home-manager-path` element in the user profile) is obsolete since
+    # Home Manager no longer installs `home-manager-path` into the user
+    # profile when run as a submodule with `useUserPackages` (a.k.a.
+    # `externalPackageInstall`); it removes leftover elements itself.
+    # Keeping it around also broke activations for profiles managed by
+    # `nix profile`, since `nix-env` refuses to touch those.
 
+    build = {
       activationAfter.homeManager = concatStringsSep " " (
         optional
           (cfg.backupFileExtension != null)
