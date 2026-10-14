@@ -6,7 +6,10 @@
 
     # for bootstrap zip ball creation and proot-termux builds, we use a fixed version of nixpkgs to ease maintanence.
     # head of nixos-25.11 as of 2026-03-01
-    # note: when updating nixpkgs-for-bootstrap, update store paths of proot-termux in modules/environment/login/default.nix
+    # note: proot-termux is opt-in now (modules/environment/login/default.nix no longer
+    # hardcodes its store paths); configs that use build.container.mode = "proot" must set
+    # environment.files.prootStatic themselves, e.g.
+    #   nix-on-droid.packages.${system}.prootTermux-aarch64
     nixpkgs-for-bootstrap.url = "github:NixOS/nixpkgs/1267bb4920d0fc06ea916734c11b0bf004bbe17e";
 
     home-manager = {

@@ -40,10 +40,14 @@ in
       };
 
       prootStatic = mkOption {
-        type = types.package;
-        readOnly = true;
+        type = types.nullOr types.package;
+        default = null;
         internal = true;
-        description = "<literal>proot-static</literal> package.";
+        description = ''
+          <literal>proot-static</literal> package. Only needed when
+          <option>build.container.mode</option> is <literal>"proot"</literal>;
+          leave unset (the default) for chroot mode.
+        '';
       };
     };
 
@@ -73,7 +77,7 @@ in
           $DRY_RUN_CMD mv $VERBOSE_ARG /usr/lib/.login-inner.tmp /usr/lib/.login-inner.new
         fi
       '';
-
+    } // lib.optionalAttrs (cfg.prootStatic != null) {
       installProotStatic = ''
         if (test -e /bin/.proot-static.new && ! diff /bin/.proot-static.new ${cfg.prootStatic}/bin/proot-static > /dev/null) || \
             (! test -e /bin/.proot-static.new && ! diff /bin/proot-static ${cfg.prootStatic}/bin/proot-static > /dev/null); then
@@ -87,15 +91,6 @@ in
 
     environment.files = {
       inherit login loginInner;
-
-      prootStatic =
-        let
-          crossCompiledPaths = {
-            aarch64-linux = "/nix/store/1v9s4wyd9xwh7iyqcs6jyh8wvqplriy7-proot-termux-static-aarch64-unknown-linux-android-0-unstable-2026-02-21";
-            x86_64-linux = "/nix/store/gn7am7kfdk9yrikiqmc93ymincvwg2b8-proot-termux-static-x86_64-unknown-linux-android-0-unstable-2026-02-21";
-          };
-        in
-        "${crossCompiledPaths.${targetSystem}}";
     };
 
   };
