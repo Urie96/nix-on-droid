@@ -10,6 +10,9 @@ let
   # dix (Diff Nix) is used after installation to show which packages changed
   # in this update. It is optional: older nixpkgs do not provide it, in which
   # case the diff is simply skipped.
+  # dix 3.0 is a Rust rewrite whose CLI gained subcommands (`dix diff OLD NEW`),
+  # while 2.x took the two paths positionally. Both are supported at runtime by
+  # probing `dix --version`; see the installPackages snippet below.
   dix = pkgs.dix or null;
 in
 
@@ -92,7 +95,15 @@ in
         # Show which packages changed in this update with dix.
         if [[ -n "$nix_on_droid_path_old" && "$nix_on_droid_path_old" != "${cfg.path}" ]]; then
           echo "Package changes in this update:"
-          $DRY_RUN_CMD ${dix}/bin/dix "$nix_on_droid_path_old" "${cfg.path}" || true
+          # dix >= 3.0 needs a subcommand, 2.x does not. `dix --version` prints
+          # "dix <version>" in both, so branch on the major version instead of
+          # hardcoding one calling convention.
+          dix_major="$(${dix}/bin/dix --version 2>/dev/null | sed -n 's/^dix \([0-9][0-9]*\)\..*/\1/p')"
+          if [[ -n "$dix_major" && "$dix_major" -ge 3 ]]; then
+            $DRY_RUN_CMD ${dix}/bin/dix diff "$nix_on_droid_path_old" "${cfg.path}" || true
+          else
+            $DRY_RUN_CMD ${dix}/bin/dix "$nix_on_droid_path_old" "${cfg.path}" || true
+          fi
         fi
       ''}
     '';
